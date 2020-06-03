@@ -7,6 +7,7 @@
 #include "ofParameter.h"
 #include "PostProcessingFilter.h"
 #include <unordered_map>
+#include "ofMain.h"
 
 namespace ofxRealSenseUtil {
 
@@ -56,13 +57,15 @@ namespace ofxRealSenseUtil {
 		ofParameter<glm::vec2> p0;
 		ofParameter<glm::vec2> p1;
 		ofParameter<glm::vec2> z_bounds;
+		ofParameter<glm::vec2> color_range;
+		ofParameter<bool> one_color;
 
 		//! offset params
 		//!offset
 		ofParameterGroup transforms;
 		ofParameter<glm::vec3> offset;
 		ofParameter<glm::vec3> theta;
-
+	
 
 	private:
 		void threadedFunction() override;
@@ -95,6 +98,8 @@ namespace ofxRealSenseUtil {
 		ofPtr<ofThreadChannel<FrameData>> response;
 
 		PostProcessingFilters filters;
+
+		string uid;
 	};
 
 }

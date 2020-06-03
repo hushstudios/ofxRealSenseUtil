@@ -3,7 +3,9 @@
 using namespace ofxRealSenseUtil;
 
 Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
-	rsParams.setName(name);
+	uid = name; 
+
+	rsParams.setName("Realsense " + name);
 	rsParams.add(filters.getParameters());
 	depthMeshParams.setName("depthMeshParams");
 	depthMeshParams.add(useColorTexture.set("useColorTexture", true));
@@ -15,6 +17,8 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
 	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(0), glm::vec2(4, 4)));
+	depthMeshParams.add(color_range.set("color_range", glm::vec2(0, 3), glm::vec2(0, 0), glm::vec2(4, 4)));
+	depthMeshParams.add(one_color.set("one_color", false));
 
 	transforms.setName("Transforms & Offsets");
 	transforms.add(offset.set("offset", glm::vec3(0), glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5)));
@@ -187,7 +191,24 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 			if (v.z > z_bounds.get().x && v.z < z_bounds.get().y) {
 				mesh.addVertex(glm::vec3(v.x, v.y, v.z));
 				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
-				//mesh.addColor(ofFloatColor(ofMap(v.z, 2, 6, 1, 0), 0, 0, 0.8));
+				
+				if (one_color.get()) {
+					if (uid == "0") {
+						mesh.addColor(ofColor(255, 0, 0));
+					}
+					else if (uid == "1") {
+						mesh.addColor(ofColor(0, 255, 0));
+					}
+					else if (uid == "2") {
+						mesh.addColor(ofColor(0, 0, 255));
+					}
+					else {
+						mesh.addColor(ofColor(ofMap(v.z, color_range.get().x, color_range.get().y, 255, 0)));
+					}
+				}
+				else {
+					mesh.addColor(ofColor(ofMap(v.z, color_range.get().x, color_range.get().y, 255, 0)));
+				}
 			}
 		}
 	}

@@ -57,11 +57,22 @@ namespace ofxRealSenseUtil {
 		ofParameter<glm::vec2> p1;
 		ofParameter<glm::vec2> z_bounds;
 
+		//! offset params
+		//!offset
+		ofParameterGroup transforms;
+		ofParameter<glm::vec3> offset;
+		ofParameter<glm::vec3> theta;
+
+
 	private:
 		void threadedFunction() override;
 		
 		void createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelStep);
 		void createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelStep);
+
+		glm::vec3 rotateXAxis(float theta, glm::vec3 v); 
+		glm::vec3 rotateYAxis(float theta, glm::vec3 v);
+		glm::vec3 rotateZAxis(float theta, glm::vec3 v);
 
 		struct FrameData {
 			ofMesh meshPointCloud;

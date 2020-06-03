@@ -14,8 +14,14 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
-	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(-4), glm::vec2(0), glm::vec2(0, 4)));
+	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(0), glm::vec2(4, 4)));
+
+	transforms.setName("Transforms & Offsets");
+	transforms.add(offset.set("offset", glm::vec3(0), glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5)));
+	transforms.add(theta.set("theta", glm::vec3(0), glm::vec3(-PI, -PI, -PI), glm::vec3(PI, PI, PI)));
+
 	rsParams.add(depthMeshParams);
+	rsParams.add(transforms); 
 }
 
 Server::~Server() {}
@@ -157,10 +163,23 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 	}
 	
 	
+	rs2::vertex* td = const_cast<rs2::vertex*>(vs);
+
 	for (int y = start.y + pixelSize; y < end.y; y += pixelSize) {
 		for (int x = start.x + pixelSize; x < end.x; x += pixelSize) {
 			int i = y * res.x + x;
-			const auto& v = vs[i];
+
+			//! offset
+			td[i].x = td[i].x + offset.get().x;
+			td[i].y = td[i].y + offset.get().y;
+			td[i].z = td[i].z + offset.get().z;
+			
+			//! rotate
+			glm::vec3 v(td[i].x, td[i].y, td[i].z);
+			v = rotateXAxis(theta.get().x, v);
+			v = rotateYAxis(theta.get().y, v);
+			v = rotateZAxis(theta.get().z, v);
+			
 			const auto& uv = texCoords[i];
 
 			if (!v.z) continue;
@@ -172,6 +191,74 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 			}
 		}
 	}
+
+}
+
+glm::vec3 Server::rotateXAxis(float theta, glm::vec3 v) {
+
+	//transfer back to the origin 
+	glm::vec3 origin; 
+	origin = v - offset.get(); 
+
+	glm::mat3 mat;
+	mat[0][0] = 1;
+	mat[1][0] = 0;
+	mat[2][0] = 0;
+	mat[0][1] = 0;
+	mat[1][1] = cos(theta);
+	mat[2][1] = sin(theta);
+	mat[0][2] = 0;
+	mat[1][2] = -sin(theta);
+	mat[2][2] = cos(theta);
+
+	glm::vec3 rot = origin * mat; 
+	glm::vec3 orig = rot + offset.get(); 
+
+	return (orig);
+}
+
+glm::vec3 Server::rotateYAxis(float theta, glm::vec3 v) {
+	//transfer back to the origin 
+	glm::vec3 origin;
+	origin = v - offset.get();
+
+	glm::mat3 mat;
+	mat[0][0] = cos(theta);
+	mat[1][0] = -sin(theta);
+	mat[2][0] = 0;
+	mat[0][1] = sin(theta);
+	mat[1][1] = cos(theta);
+	mat[2][1] = 0;
+	mat[0][2] = 0;
+	mat[1][2] = 0;
+	mat[2][2] = 1;
+
+	glm::vec3 rot = origin * mat;
+	glm::vec3 orig = rot + offset.get();
+
+	return (orig);
+}
+
+glm::vec3 Server::rotateZAxis(float theta, glm::vec3 v) {
+	//transfer back to the origin 
+	glm::vec3 origin;
+	origin = v - offset.get();
+
+	glm::mat3 mat;
+	mat[0][0] = cos(theta);
+	mat[1][0] = 0;
+	mat[2][0] = -sin(theta);
+	mat[0][1] = 0;
+	mat[1][1] = 1;
+	mat[2][1] = 0;
+	mat[0][2] = sin(theta);
+	mat[1][2] = 0;
+	mat[2][2] = cos(theta);
+
+	glm::vec3 rot = origin * mat;
+	glm::vec3 orig = rot + offset.get();
+
+	return (orig);
 
 }
 

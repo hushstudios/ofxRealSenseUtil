@@ -55,6 +55,7 @@ namespace ofxRealSenseUtil {
 		ofParameter<bool> isClip;
 		ofParameter<glm::vec2> p0;
 		ofParameter<glm::vec2> p1;
+		ofParameter<glm::vec2> z_bounds;
 
 	private:
 		void threadedFunction() override;
@@ -71,6 +72,7 @@ namespace ofxRealSenseUtil {
 
 		rs2::frame_queue frameQueue;
 		rs2::pointcloud pc;
+
 
 		ofVboMesh meshPointCloud;
 		ofVboMesh meshPolygon;

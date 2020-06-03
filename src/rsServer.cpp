@@ -14,6 +14,7 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
+	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(-4), glm::vec2(0), glm::vec2(0, 4)));
 	rsParams.add(depthMeshParams);
 }
 
@@ -51,7 +52,9 @@ void Server::stop() {
 }
 
 void Server::update() {
-	
+
+
+
 	if (bPlaying) {
 		bool r = true;
 		request->send(r);
@@ -87,6 +90,8 @@ void Server::update() {
 }
 
 void Server::threadedFunction() {
+
+
 	bool r = true;
 	while (request->receive(r)) {
 
@@ -98,6 +103,7 @@ void Server::threadedFunction() {
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
 		
+
 		pc.map_to(color);
 		filters.filter(depth);
 
@@ -111,6 +117,8 @@ void Server::threadedFunction() {
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
 		
 		auto& points = pc.calculate(depth);
+
+
 		if (useDepthTexture) {
 			newFd.depthPix.setFromPixels(
 				(float*)points.get_vertices(),
@@ -140,11 +148,14 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 	const rs2::vertex * vs = ps.get_vertices();
 	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
 
+	
+
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
 		start = glm::max(glm::ivec2(p0.get()), glm::ivec2(0));
 		end = glm::min(glm::ivec2(p1.get()), res);
 	}
+	
 	
 	for (int y = start.y + pixelSize; y < end.y; y += pixelSize) {
 		for (int x = start.x + pixelSize; x < end.x; x += pixelSize) {
@@ -153,8 +164,12 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 			const auto& uv = texCoords[i];
 
 			if (!v.z) continue;
-			mesh.addVertex(glm::vec3(v.x, -v.y, -v.z));
-			mesh.addTexCoord(glm::vec2(uv.u, uv.v));
+
+			if (v.z > z_bounds.get().x && v.z < z_bounds.get().y) {
+				mesh.addVertex(glm::vec3(v.x, v.y, v.z));
+				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
+				//mesh.addColor(ofFloatColor(ofMap(v.z, 2, 6, 1, 0), 0, 0, 0.8));
+			}
 		}
 	}
 

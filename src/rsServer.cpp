@@ -21,11 +21,15 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(one_color.set("one_color", false));
 
 	transforms.setName("Transforms & Offsets");
+	transforms.add(key_control.set("key_control", false));
 	transforms.add(offset.set("offset", glm::vec3(0), glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5)));
 	transforms.add(theta.set("theta", glm::vec3(0), glm::vec3(-PI, -PI, -PI), glm::vec3(PI, PI, PI)));
 
 	rsParams.add(depthMeshParams);
 	rsParams.add(transforms); 
+
+	//! Add listeners
+	ofAddListener(ofEvents().keyPressed, this, &Server::onKeyPressed);
 }
 
 Server::~Server() {}
@@ -389,4 +393,62 @@ const ofVboMesh& Server::getPolygonMesh() const {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPolygon;
+}
+
+#pragma mark KEY CONTROLS
+
+void Server::onKeyPressed(ofKeyEventArgs& arg) {
+	if (!key_control.get()) {
+		return; 
+	}
+	
+	float step = 0.01f; 
+	auto offset_copy = offset.get(); 
+
+	switch (arg.key) {
+	case OF_KEY_UP: {
+		float new_val = offset_copy.y + step;
+		offset_copy.y = new_val;
+		offset.set(offset_copy);
+
+		break; 
+	}
+	case OF_KEY_DOWN: {
+		float new_val = offset_copy.y - step;
+		offset_copy.y = new_val;
+		offset.set(offset_copy);
+
+		break;
+	}
+	case OF_KEY_RIGHT: {
+		float new_val = offset_copy.x + step; 
+		offset_copy.x = new_val; 
+		offset.set(offset_copy); 
+
+		break;
+	}
+	case OF_KEY_LEFT: {
+		float new_val = offset_copy.x - step;
+		offset_copy.x = new_val;
+		offset.set(offset_copy);
+
+		break;
+	}
+	case OF_KEY_PAGE_UP: {
+		float new_val = offset_copy.z + step;
+		offset_copy.z = new_val;
+		offset.set(offset_copy);
+
+		break;
+	}
+	case OF_KEY_PAGE_DOWN: {
+		float new_val = offset_copy.z - step;
+		offset_copy.z = new_val;
+		offset.set(offset_copy);
+
+		break;
+	}
+	default: break; 
+	}
+
 }

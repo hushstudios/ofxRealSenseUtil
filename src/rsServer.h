@@ -38,6 +38,7 @@ namespace ofxRealSenseUtil {
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		ofParameterGroup& getParameters() { return rsParams; }
 
+
 	protected:
 		rs2::device device;
 		rs2::config config;
@@ -65,7 +66,7 @@ namespace ofxRealSenseUtil {
 		ofParameterGroup transforms;
 		ofParameter<glm::vec3> offset;
 		ofParameter<glm::vec3> theta;
-	
+		ofParameter<bool> key_control;
 
 	private:
 		void threadedFunction() override;
@@ -100,6 +101,9 @@ namespace ofxRealSenseUtil {
 		PostProcessingFilters filters;
 
 		string uid;
+
+		// UTILS 
+		void onKeyPressed(ofKeyEventArgs& arg);
 	};
 
 }

@@ -12,7 +12,7 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(useDepthTexture.set("useDepthTexture", false));
 	depthMeshParams.add(usePointCloud.set("usePointCloud", false));
 	depthMeshParams.add(usePolygonMesh.set("usePolygonMesh", true));
-	depthMeshParams.add(depthPixelSize.set("pixelSize", 10, 1, 100));
+	depthMeshParams.add(depthPixelSize.set("pixelSize", 5, 1, 20));
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
@@ -404,6 +404,7 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 	
 	float step = 0.01f; 
 	auto offset_copy = offset.get(); 
+	auto theta_copy = theta.get(); 
 
 	switch (arg.key) {
 	case OF_KEY_UP: {
@@ -446,6 +447,42 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 		offset_copy.z = new_val;
 		offset.set(offset_copy);
 
+		break;
+	}
+	case '1': {
+		float new_val = theta_copy.x + step;
+		theta_copy.x = new_val;
+		theta.set(theta_copy);
+		break;
+	}
+	case '2': {
+		float new_val = theta_copy.x - step;
+		theta_copy.x = new_val;
+		theta.set(theta_copy);
+		break;
+	}
+	case '3': {
+		float new_val = theta_copy.y + step;
+		theta_copy.y = new_val;
+		theta.set(theta_copy);
+		break;
+	}
+	case '4': {
+		float new_val = theta_copy.y - step;
+		theta_copy.y = new_val;
+		theta.set(theta_copy);
+		break;
+	}
+	case '5': {
+		float new_val = theta_copy.z + step;
+		theta_copy.z = new_val;
+		theta.set(theta_copy);
+		break;
+	}
+	case '6': {
+		float new_val = theta_copy.z - step;
+		theta_copy.z = new_val;
+		theta.set(theta_copy);
 		break;
 	}
 	default: break; 

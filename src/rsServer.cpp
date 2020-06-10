@@ -20,7 +20,7 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(color_range.set("color_range", glm::vec2(0, 3), glm::vec2(0, 0), glm::vec2(4, 4)));
 	depthMeshParams.add(one_color.set("one_color", false));
 
-	transforms.setName("Transforms & Offsets");
+	transforms.setName("Transforms");
 	transforms.add(key_control.set("key_control", false));
 	transforms.add(offset.set("offset", glm::vec3(0), glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5)));
 	transforms.add(theta.set("theta", glm::vec3(0), glm::vec3(-PI, -PI, -PI), glm::vec3(PI, PI, PI)));

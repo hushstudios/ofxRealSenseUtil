@@ -67,18 +67,25 @@ void Server::stop() {
 
 void Server::update() {
 
+	
+	string thread_channel_id = "thread_channel_id" + uid;
 
-
+	TS_START(thread_channel_id);
 	if (bPlaying) {
 		bool r = true;
 		request->send(r);
 	}
+	TS_STOP(thread_channel_id);
 	
 	bNewFrame = false;
 
+	string tryReceive_id = "tryReceive" + uid;
+
+	TS_START(tryReceive_id);
 	while (response->tryReceive(fd)) {
 		bNewFrame = true;
 	}
+	TS_STOP(tryReceive_id);
 
 	if (bNewFrame) {
 		if (useColorTexture) {
@@ -94,8 +101,16 @@ void Server::update() {
 			depthTex.loadData(fd.depthPix);
 		}
 		if (usePointCloud) {
+			string pc_clear = "pc_clear" + uid;
+			string pc_move = "pc_move" + uid;
+
+			TS_START(pc_clear);
 			meshPointCloud.clear();
+			TS_STOP(pc_clear);
+
+			TS_START(pc_move);
 			meshPointCloud = std::move(fd.meshPointCloud);
+			TS_STOP(pc_move);
 		}
 		if (usePolygonMesh) meshPolygon = std::move(fd.meshPolygon);
 		
@@ -382,12 +397,27 @@ const ofTexture& Server::getDepthTex() const {
 	}
 	return depthTex;
 }
+
+#ifdef VBO_MESH
+
 const ofVboMesh& Server::getPointCloud() const {
 	if (!usePointCloud) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";
 	}
 	return meshPointCloud;
 }
+
+#else
+
+const ofMesh& Server::getPointCloud() const {
+	if (!usePointCloud) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
+	}
+	return meshPointCloud;
+}
+
+#endif
+
 const ofVboMesh& Server::getPolygonMesh() const {
 	if (!usePolygonMesh) {
 		ofLogError(__FUNCTION__) << "Target flag is disabled!";

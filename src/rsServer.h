@@ -8,6 +8,9 @@
 #include "PostProcessingFilter.h"
 #include <unordered_map>
 #include "ofMain.h"
+#include "ofxTimeMeasurements.h"
+
+#define VBO_MESH true 
 
 namespace ofxRealSenseUtil {
 
@@ -28,13 +31,21 @@ namespace ofxRealSenseUtil {
 		// Const accessors
 		const ofTexture& getColorTex() const;
 		const ofTexture& getDepthTex() const;
-		const ofVboMesh& getPointCloud() const;
+		//const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
 		const ofFloatPixels& getDepthPixels() const;
 
 		// Non-const accessors
-		ofVboMesh& getPointCloud() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPointCloud()); }
+		//ofVboMesh& getPointCloud() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPointCloud()); }
 		ofVboMesh& getPolygonMesh() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPolygonMesh()); }
+
+#ifdef VBO_MESH
+		const ofVboMesh& getPointCloud() const;
+		ofVboMesh& getPointCloud() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPointCloud()); }
+#else
+		const ofMesh& getPointCloud() const;
+		ofMesh& getPointCloud() { return const_cast<ofMesh&>(const_cast<const Server*>(this)->getPointCloud()); }
+#endif
 
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		ofParameterGroup& getParameters() { return rsParams; }

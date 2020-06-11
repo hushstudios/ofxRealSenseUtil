@@ -395,6 +395,13 @@ const ofVboMesh& Server::getPolygonMesh() const {
 	return meshPolygon;
 }
 
+const ofFloatPixels& Server::getDepthPixels() const {
+	if (!useDepthTexture) {
+		ofLogError(__FUNCTION__) << "Target flag is disabled!";
+	}
+	return fd.depthPix;
+}
+
 #pragma mark KEY CONTROLS
 
 void Server::onKeyPressed(ofKeyEventArgs& arg) {

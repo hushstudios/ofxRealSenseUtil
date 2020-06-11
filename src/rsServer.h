@@ -30,6 +30,7 @@ namespace ofxRealSenseUtil {
 		const ofTexture& getDepthTex() const;
 		const ofVboMesh& getPointCloud() const;
 		const ofVboMesh& getPolygonMesh() const;
+		const ofFloatPixels& getDepthPixels() const;
 
 		// Non-const accessors
 		ofVboMesh& getPointCloud() { return const_cast<ofVboMesh&>(const_cast<const Server*>(this)->getPointCloud()); }

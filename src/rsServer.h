@@ -70,6 +70,8 @@ namespace ofxRealSenseUtil {
 		ofParameter<glm::vec2> p0;
 		ofParameter<glm::vec2> p1;
 		ofParameter<glm::vec2> z_bounds;
+		ofParameter<glm::vec2> y_bounds;
+		ofParameter<glm::vec2> x_bounds;
 		ofParameter<glm::vec2> color_range;
 		ofParameter<bool> one_color;
 

@@ -17,6 +17,8 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
 	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(-10), glm::vec2(10, 10)));
+	depthMeshParams.add(y_bounds.set("y_bounds", glm::vec2(-4, 4), glm::vec2(-10), glm::vec2(10, 10)));
+	depthMeshParams.add(x_bounds.set("z_bounds", glm::vec2(-4, 4), glm::vec2(-10), glm::vec2(10, 10)));
 	depthMeshParams.add(color_range.set("color_range", glm::vec2(0, 3), glm::vec2(0, 0), glm::vec2(4, 4)));
 	depthMeshParams.add(one_color.set("one_color", false));
 
@@ -184,7 +186,7 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 		start = glm::max(glm::ivec2(p0.get()), glm::ivec2(0));
 		end = glm::min(glm::ivec2(p1.get()), res);
 	}
-	
+
 	
 	rs2::vertex* td = const_cast<rs2::vertex*>(vs);
 
@@ -199,15 +201,28 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 			
 			//! rotate
 			glm::vec3 v(td[i].x, td[i].y, td[i].z);
-			v = rotateXAxis(theta.get().x, v);
+			//v = rotateXAxis(theta.get().x, v);
+			//v = rotateYAxis(theta.get().y, v);
+			//v = rotateZAxis(theta.get().z, v);
+
 			v = rotateYAxis(theta.get().y, v);
+			//v = rotateZAxis(theta.get().z, v);
+			v = rotateXAxis(theta.get().x, v);
 			v = rotateZAxis(theta.get().z, v);
-			
+
+
+			td[i].x = v.x;
+			td[i].y = v.y;
+			td[i].z = v.z;
+
 			const auto& uv = texCoords[i];
 
 			if (!v.z) continue;
 
-			if (v.z > z_bounds.get().x && v.z < z_bounds.get().y) {
+			
+			if (v.z > z_bounds.get().x && v.z < z_bounds.get().y 
+				&& v.y > y_bounds.get().x && v.y < y_bounds.get().y
+				&& v.x > x_bounds.get().x && v.x < x_bounds.get().y) {
 				mesh.addVertex(glm::vec3(v.x, v.y, v.z));
 				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
 				
@@ -229,8 +244,11 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 					mesh.addColor(ofColor(ofMap(v.z, color_range.get().x, color_range.get().y, 255, 0)));
 				}
 			}
+			
 		}
 	}
+
+	
 
 }
 
@@ -472,14 +490,14 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 
 		break;
 	}
-	case OF_KEY_PAGE_UP: {
+	case '=': {
 		float new_val = offset_copy.z + step;
 		offset_copy.z = new_val;
 		offset.set(offset_copy);
 
 		break;
 	}
-	case OF_KEY_PAGE_DOWN: {
+	case '-': {
 		float new_val = offset_copy.z - step;
 		offset_copy.z = new_val;
 		offset.set(offset_copy);

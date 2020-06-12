@@ -16,7 +16,7 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
-	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(0), glm::vec2(4, 4)));
+	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(-10), glm::vec2(10, 10)));
 	depthMeshParams.add(color_range.set("color_range", glm::vec2(0, 3), glm::vec2(0, 0), glm::vec2(4, 4)));
 	depthMeshParams.add(one_color.set("one_color", false));
 

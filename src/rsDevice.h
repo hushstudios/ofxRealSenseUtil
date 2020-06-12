@@ -14,6 +14,7 @@ namespace ofxRealSenseUtil {
 			bool useDepthSensor;
 			int deviceId;
 			bool autoExposure;
+			string device_serial; 
 		};
 
 		Device() : Server("RealsenseDevice") {}

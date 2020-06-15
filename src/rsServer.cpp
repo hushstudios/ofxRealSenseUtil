@@ -3,7 +3,7 @@
 using namespace ofxRealSenseUtil;
 
 Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
-	uid = name; 
+	uid = name;
 
 	rsParams.setName("Realsense " + name);
 	rsParams.add(filters.getParameters());
@@ -16,19 +16,19 @@ Server::Server(const std::string& name) : bPlaying(false), bNewFrame(false) {
 	depthMeshParams.add(isClip.set("enableClip", false));
 	depthMeshParams.add(p0.set("clip_p0", glm::vec2(0), glm::vec2(0), glm::vec2(640, 480)));
 	depthMeshParams.add(p1.set("clip_p1", glm::vec2(1280, 720), glm::vec2(0), glm::vec2(1280, 720)));
-	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(0, 3), glm::vec2(-10), glm::vec2(10, 10)));
-	depthMeshParams.add(y_bounds.set("y_bounds", glm::vec2(-4, 4), glm::vec2(-10), glm::vec2(10, 10)));
-	depthMeshParams.add(x_bounds.set("z_bounds", glm::vec2(-4, 4), glm::vec2(-10), glm::vec2(10, 10)));
+	depthMeshParams.add(z_bounds.set("z_bounds", glm::vec2(-10, 10), glm::vec2(-10), glm::vec2(10, 10)));
+	depthMeshParams.add(y_bounds.set("y_bounds", glm::vec2(-10, 10), glm::vec2(-10), glm::vec2(10, 10)));
+	depthMeshParams.add(x_bounds.set("x_bounds", glm::vec2(-10, 10), glm::vec2(-10), glm::vec2(10, 10)));
 	depthMeshParams.add(color_range.set("color_range", glm::vec2(0, 3), glm::vec2(0, 0), glm::vec2(4, 4)));
 	depthMeshParams.add(one_color.set("one_color", false));
 
 	transforms.setName("Transforms");
 	transforms.add(key_control.set("key_control", false));
 	transforms.add(offset.set("offset", glm::vec3(0), glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5)));
-	transforms.add(theta.set("theta", glm::vec3(0), glm::vec3(-PI, -PI, -PI), glm::vec3(PI, PI, PI)));
+	transforms.add(theta.set("theta", glm::vec3(0, -PI / 2, 0), glm::vec3(-PI, -PI, -PI), glm::vec3(PI, PI, PI)));
 
 	rsParams.add(depthMeshParams);
-	rsParams.add(transforms); 
+	rsParams.add(transforms);
 
 	//! Add listeners
 	ofAddListener(ofEvents().keyPressed, this, &Server::onKeyPressed);
@@ -47,7 +47,8 @@ void Server::start() {
 	try {
 		device = pipe->start(config).get_device();
 		ofLogNotice(__FUNCTION__) << "start: " << device.get_info(RS2_CAMERA_INFO_NAME);
-	} catch (const rs2::error& e) {
+	}
+	catch (const rs2::error & e) {
 		ofLogError(__FUNCTION__) << e.what();
 	}
 
@@ -59,9 +60,9 @@ void Server::stop() {
 	bPlaying = false;
 	request->close();
 	response->close();
-	
+
 	waitForThread(true);
-	
+
 	pipe->stop();
 
 	ofLogNotice(__FUNCTION__) << "stop: " << device.get_info(RS2_CAMERA_INFO_NAME);
@@ -69,7 +70,7 @@ void Server::stop() {
 
 void Server::update() {
 
-	
+
 	string thread_channel_id = "thread_channel_id" + uid;
 
 	TS_START(thread_channel_id);
@@ -78,7 +79,7 @@ void Server::update() {
 		request->send(r);
 	}
 	TS_STOP(thread_channel_id);
-	
+
 	bNewFrame = false;
 
 	string tryReceive_id = "tryReceive" + uid;
@@ -92,10 +93,11 @@ void Server::update() {
 	if (bNewFrame) {
 		if (useColorTexture) {
 			if (!colorTex.isAllocated()) {
+				ofLogNotice() << "color pix: " << fd.colorPix.getWidth() << ", " << fd.colorPix.getHeight();
 				colorTex.allocate(fd.colorPix.getWidth(), fd.colorPix.getHeight(), GL_RGB8);
 			}
 			colorTex.loadData(fd.colorPix);
-		} 
+		}
 		if (useDepthTexture) {
 			if (!depthTex.isAllocated()) {
 				depthTex.allocate(fd.depthPix.getWidth(), fd.depthPix.getHeight(), GL_RGB32F);
@@ -115,7 +117,7 @@ void Server::update() {
 			TS_STOP(pc_move);
 		}
 		if (usePolygonMesh) meshPolygon = std::move(fd.meshPolygon);
-		
+
 	}
 
 }
@@ -127,13 +129,13 @@ void Server::threadedFunction() {
 	while (request->receive(r)) {
 
 		FrameData newFd;
-		
+
 		rs2::frameset frames;
 		if (!pipe->poll_for_frames(&frames)) continue;
-		
+
 		auto& depth = frames.get_depth_frame();
 		auto& color = frames.get_color_frame();
-		
+
 
 		pc.map_to(color);
 		filters.filter(depth);
@@ -146,7 +148,7 @@ void Server::threadedFunction() {
 		}
 
 		glm::ivec2 depthRes(depth.get_width(), depth.get_height());
-		
+
 		auto& points = pc.calculate(depth);
 
 
@@ -156,17 +158,41 @@ void Server::threadedFunction() {
 				depthRes.x, depthRes.y, OF_IMAGE_COLOR
 			);
 		}
-		
+
 		if (usePointCloud) {
 			createPointCloud(newFd.meshPointCloud, points, depthRes, depthPixelSize.get());
 		}
+
 		if (usePolygonMesh) {
 			createMesh(newFd.meshPolygon, points, depthRes, depthPixelSize.get());
 		}
 
 		response->send(std::move(newFd));
-		
+
 	}
+
+
+}
+
+void Server::transformPointCloud() {
+	
+	transformedPc.clear(); 
+
+	for (int i = 0; i < meshPointCloud.getVertices().size(); i++) {
+	/*	auto &_v = meshPointCloud.getVertices()[i];
+
+		glm::vec3 v(_v[i].x, _v[i].y, _v[i].z);
+		
+		v.x = v.x + offset.get().x;
+		v.y = v.y + offset.get().y;
+		v.z = v.z + offset.get().z;
+
+		if (!v.z) continue;
+
+		transformedPc.addVertex(glm::vec3(v.x, v.y, v.z));*/
+		//transformedPc.addTexCoord(_v.getTexCoords().x, _v.getTexCoords().y);
+	}
+
 
 }
 
@@ -175,11 +201,11 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 	if (!ps) return;
 
 	mesh.clear();
-	
-	const rs2::vertex * vs = ps.get_vertices();
-	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
 
-	
+	const rs2::vertex* vs = ps.get_vertices();
+	const rs2::texture_coordinate* texCoords = ps.get_texture_coordinates();
+
+
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
@@ -187,7 +213,7 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 		end = glm::min(glm::ivec2(p1.get()), res);
 	}
 
-	
+
 	rs2::vertex* td = const_cast<rs2::vertex*>(vs);
 
 	for (int y = start.y + pixelSize; y < end.y; y += pixelSize) {
@@ -198,15 +224,10 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 			td[i].x = td[i].x + offset.get().x;
 			td[i].y = td[i].y + offset.get().y;
 			td[i].z = td[i].z + offset.get().z;
-			
+
 			//! rotate
 			glm::vec3 v(td[i].x, td[i].y, td[i].z);
-			//v = rotateXAxis(theta.get().x, v);
-			//v = rotateYAxis(theta.get().y, v);
-			//v = rotateZAxis(theta.get().z, v);
-
 			v = rotateYAxis(theta.get().y, v);
-			//v = rotateZAxis(theta.get().z, v);
 			v = rotateXAxis(theta.get().x, v);
 			v = rotateZAxis(theta.get().z, v);
 
@@ -219,13 +240,13 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 
 			if (!v.z) continue;
 
-			
-			if (v.z > z_bounds.get().x && v.z < z_bounds.get().y 
-				&& v.y > y_bounds.get().x && v.y < y_bounds.get().y
-				&& v.x > x_bounds.get().x && v.x < x_bounds.get().y) {
+
+			if (v.z > z_bounds.get().x&& v.z < z_bounds.get().y
+				&& v.y > y_bounds.get().x&& v.y < y_bounds.get().y
+				&& v.x > x_bounds.get().x&& v.x < x_bounds.get().y) {
 				mesh.addVertex(glm::vec3(v.x, v.y, v.z));
 				mesh.addTexCoord(glm::vec2(uv.u, uv.v));
-				
+
 				if (one_color.get()) {
 					if (uid == "0") {
 						mesh.addColor(ofColor(255, 0, 0));
@@ -240,23 +261,23 @@ void Server::createPointCloud(ofMesh& mesh, const rs2::points& ps, const glm::iv
 						mesh.addColor(ofColor(ofMap(v.z, color_range.get().x, color_range.get().y, 255, 0)));
 					}
 				}
-				else {
+				/*else {
 					mesh.addColor(ofColor(ofMap(v.z, color_range.get().x, color_range.get().y, 255, 0)));
-				}
+				}*/
 			}
-			
+
 		}
 	}
 
-	
+
 
 }
 
 glm::vec3 Server::rotateXAxis(float theta, glm::vec3 v) {
 
 	//transfer back to the origin 
-	glm::vec3 origin; 
-	origin = v - offset.get(); 
+	glm::vec3 origin;
+	origin = v - offset.get();
 
 	glm::mat3 mat;
 	mat[0][0] = 1;
@@ -269,8 +290,8 @@ glm::vec3 Server::rotateXAxis(float theta, glm::vec3 v) {
 	mat[1][2] = -sin(theta);
 	mat[2][2] = cos(theta);
 
-	glm::vec3 rot = origin * mat; 
-	glm::vec3 orig = rot + offset.get(); 
+	glm::vec3 rot = origin * mat;
+	glm::vec3 orig = rot + offset.get();
 
 	return (orig);
 }
@@ -323,12 +344,12 @@ glm::vec3 Server::rotateZAxis(float theta, glm::vec3 v) {
 void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& res, int pixelSize) {
 
 	if (!ps) return;
-	
+
 	mesh.clear();
 	mesh.setMode(OF_PRIMITIVE_TRIANGLES);
 
-	const rs2::vertex * vs = ps.get_vertices();
-	const rs2::texture_coordinate * texCoords = ps.get_texture_coordinates();
+	const rs2::vertex* vs = ps.get_vertices();
+	const rs2::texture_coordinate* texCoords = ps.get_texture_coordinates();
 
 	glm::ivec2 start(0, 0), end(res);
 	if (isClip) {
@@ -361,7 +382,8 @@ void Server::createMesh(ofMesh& mesh, const rs2::points& ps, const glm::ivec2& r
 				if (v.z) {
 					pos[i] = glm::vec3(v.x, -v.y, -v.z);
 					uv[i] = glm::vec2(t.u, t.v);
-				} else {
+				}
+				else {
 					eraseFlag[i] = true;
 					eraseCount++;
 				}
@@ -454,12 +476,12 @@ const ofFloatPixels& Server::getDepthPixels() const {
 
 void Server::onKeyPressed(ofKeyEventArgs& arg) {
 	if (!key_control.get()) {
-		return; 
+		return;
 	}
-	
-	float step = 0.01f; 
-	auto offset_copy = offset.get(); 
-	auto theta_copy = theta.get(); 
+
+	float step = 0.01f;
+	auto offset_copy = offset.get();
+	auto theta_copy = theta.get();
 
 	switch (arg.key) {
 	case OF_KEY_UP: {
@@ -467,7 +489,7 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 		offset_copy.y = new_val;
 		offset.set(offset_copy);
 
-		break; 
+		break;
 	}
 	case OF_KEY_DOWN: {
 		float new_val = offset_copy.y - step;
@@ -477,9 +499,9 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 		break;
 	}
 	case OF_KEY_RIGHT: {
-		float new_val = offset_copy.x + step; 
-		offset_copy.x = new_val; 
-		offset.set(offset_copy); 
+		float new_val = offset_copy.x + step;
+		offset_copy.x = new_val;
+		offset.set(offset_copy);
 
 		break;
 	}
@@ -540,7 +562,7 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 		theta.set(theta_copy);
 		break;
 	}
-	default: break; 
+	default: break;
 	}
 
 }

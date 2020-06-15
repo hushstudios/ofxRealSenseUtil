@@ -50,6 +50,7 @@ namespace ofxRealSenseUtil {
 		void setDepthRes(int p) { depthPixelSize.set(p); }
 		ofParameterGroup& getParameters() { return rsParams; }
 
+		void transformPointCloud(); 
 
 	protected:
 		rs2::device device;
@@ -102,7 +103,7 @@ namespace ofxRealSenseUtil {
 		rs2::frame_queue frameQueue;
 		rs2::pointcloud pc;
 
-
+		ofVboMesh transformedPc;
 		ofVboMesh meshPointCloud;
 		ofVboMesh meshPolygon;
 		ofTexture colorTex;

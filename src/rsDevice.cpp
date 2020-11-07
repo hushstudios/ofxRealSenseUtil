@@ -19,6 +19,8 @@ namespace ofxRealSenseUtil {
 		bOpen = true;
 	}
 	void Device::startRecord(const std::string& path) {
+		// landon: disabled recording because i'm mad at it and never want it to happen again
+		/*
 		if (!bOpen) {
 			ofLogError(__FUNCTION__) << "Not opened yet.";
 			return;
@@ -33,8 +35,10 @@ namespace ofxRealSenseUtil {
 		} else {
 			ofLogWarning(__FUNCTION__) << "Already started.";
 		}
+		*/
 	}
 	void Device::endRecord() {
+        /*
 		if (device.as<rs2::recorder>()) {
 			stop();
 			refreshConfig(defaultSettings);
@@ -43,6 +47,7 @@ namespace ofxRealSenseUtil {
 		} else {
 			ofLogWarning(__FUNCTION__) << "not started yet.";
 		}
+		*/
 	}
 	void Device::refreshConfig(const Settings& s) {
 		config = rs2::config();

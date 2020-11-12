@@ -178,8 +178,11 @@ void Server::transformPointCloud() {
 	
 	transformedPc.clear(); 
 
+	// TODO landon: determine why this was disabled or if we need this at all. 
+	// seems inefficient transforming a giant point cloud with glm on single thread so maybe that's why
+	/*
 	for (int i = 0; i < meshPointCloud.getVertices().size(); i++) {
-	/*	auto &_v = meshPointCloud.getVertices()[i];
+		auto &_v = meshPointCloud.getVertices()[i];
 
 		glm::vec3 v(_v[i].x, _v[i].y, _v[i].z);
 		
@@ -189,10 +192,10 @@ void Server::transformPointCloud() {
 
 		if (!v.z) continue;
 
-		transformedPc.addVertex(glm::vec3(v.x, v.y, v.z));*/
+		transformedPc.addVertex(glm::vec3(v.x, v.y, v.z));
 		//transformedPc.addTexCoord(_v.getTexCoords().x, _v.getTexCoords().y);
 	}
-
+	*/
 
 }
 
@@ -475,6 +478,7 @@ const ofFloatPixels& Server::getDepthPixels() const {
 #pragma mark KEY CONTROLS
 
 void Server::onKeyPressed(ofKeyEventArgs& arg) {
+    
 	if (!key_control.get()) {
 		return;
 	}
@@ -564,5 +568,5 @@ void Server::onKeyPressed(ofKeyEventArgs& arg) {
 	}
 	default: break;
 	}
-
+	
 }
